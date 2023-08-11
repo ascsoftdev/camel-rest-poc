@@ -28,17 +28,20 @@ public class CustomRouteBuilder extends RouteBuilder {
         restConfiguration()
                 .component("servlet")
                 .bindingMode(RestBindingMode.auto);
+        
 
         rest("/api")
                 .consumes(MediaType.APPLICATION_JSON_VALUE).produces(MediaType.APPLICATION_JSON_VALUE)
                 .get("/order").outType(Employee.class).to("direct:get-employee-data")
-                .post("/order").type(Employee.class).to("direct:save-employee-data");
+                .post("/order").type(Employee.class).outType(Employee.class).to("direct:save-employee-data");
         
         
         
-        from("direct:get-employee-data").process(this::getAllEmployee);
+        from("direct:get-employee-data").process(this::getAllEmployee).end();
         
-        from("direct:save-employee-data").process(this::createEmployees);
+        from("direct:save-employee-data").process(this::createEmployees)
+        .log("Data Saved")
+        .end();
         
         
     }  
@@ -63,6 +66,5 @@ public class CustomRouteBuilder extends RouteBuilder {
     	Message message = new DefaultMessage(exchange.getContext());
     	message.setBody(employee);
     	exchange.setMessage(message);
-    	exchange.getMessage().setHeader(HTTP_RESPONSE_CODE, HttpStatus.CREATED);
     }
 }
